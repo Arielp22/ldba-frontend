@@ -44,6 +44,16 @@ export interface CalificarJugadorPayload {
   observaciones?: string
 }
 
+export interface ImportJugadoresResult {
+  success: boolean
+  creados: number
+}
+
+export interface ImportJugadoresError {
+  fila: number
+  error: string
+}
+
 export interface JugadorRepository {
   list(params: ListJugadoresParams): Promise<PaginatedResult<Jugador>>
   get(id: number): Promise<Jugador>
@@ -51,4 +61,5 @@ export interface JugadorRepository {
   update(id: number, payload: UpdateJugadorPayload): Promise<Jugador>
   remove(id: number): Promise<void>
   calificar(id: number, payload: CalificarJugadorPayload): Promise<Jugador>
+  importarExcel(file: File): Promise<ImportJugadoresResult>
 }

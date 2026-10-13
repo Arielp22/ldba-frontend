@@ -7,9 +7,13 @@ import type {
 } from '@/domain/ports/jugador.repository'
 import type { PaginatedResult } from '@/domain/ports/categoria.repository'
 import type { Jugador } from '@/domain/entities/jugador.entity'
+import type {
+  ImportJugadoresResult,
+} from '@/domain/ports/jugador.repository'
+
 
 export class JugadorUseCase {
-  constructor(private readonly repo: JugadorRepository) {}
+  constructor(private readonly repo: JugadorRepository) { }
 
   list(params: ListJugadoresParams): Promise<PaginatedResult<Jugador>> {
     return this.repo.list(params)
@@ -33,5 +37,9 @@ export class JugadorUseCase {
 
   calificar(id: number, payload: CalificarJugadorPayload): Promise<Jugador> {
     return this.repo.calificar(id, payload)
+  }
+
+  importarExcel(file: File): Promise<ImportJugadoresResult> {
+    return this.repo.importarExcel(file)
   }
 }

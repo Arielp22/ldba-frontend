@@ -9,6 +9,10 @@ import type {
 } from '@/domain/ports/jugador.repository'
 import type { PaginatedResult } from '@/domain/ports/categoria.repository'
 import type { Jugador } from '@/domain/entities/jugador.entity'
+import type {
+  ImportJugadoresResult,
+} from '@/domain/ports/jugador.repository'
+
 
 export class AxiosJugadorRepository implements JugadorRepository {
   async list(params: ListJugadoresParams): Promise<PaginatedResult<Jugador>> {
@@ -23,6 +27,25 @@ export class AxiosJugadorRepository implements JugadorRepository {
             estado_calificacion: params.estado_calificacion || undefined,
             activo: params.activo === undefined ? undefined : params.activo,
           },
+        },
+      )
+      return data
+    } catch (err) {
+      throw parseApiError(err)
+    }
+  }
+
+  async importarExcel(file: File): Promise<ImportJugadoresResult> {
+    try {
+      const formData = new FormData()
+      formData.append('archivo', file)
+
+      const { data } = await apiClient.post<ImportJugadoresResult>(
+        '/jugadores/importar/',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60_000,
         },
       )
       return data

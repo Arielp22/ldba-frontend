@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react'
+import { Loader2, Pencil, Plus, ShieldCheck, Trash2, FileSpreadsheet } from 'lucide-react'
 
 import { useJugadorStore } from '@/presentation/store/jugador.store'
 import { useAuthStore } from '@/presentation/store/auth.store'
@@ -34,6 +34,9 @@ import type {
   JugadorEstadoCalificacion,
 } from '@/domain/entities/jugador.entity'
 import { formatDate } from '@/presentation/utils/formatters'
+import ImportJugadoresDialog from '@/presentation/components/shared/ImportJugadoresDialog'
+
+
 
 // ─── Schema: crear/editar ─────────────────────────────────────────────────────
 
@@ -76,11 +79,11 @@ const ESTADOS: {
   label: string
   variant: 'default' | 'secondary' | 'destructive' | 'outline'
 }[] = [
-  { value: 'pendiente', label: 'Pendiente', variant: 'outline' },
-  { value: 'calificado', label: 'Calificado', variant: 'default' },
-  { value: 'rechazado', label: 'Rechazado', variant: 'destructive' },
-  { value: 'inhabilitado', label: 'Inhabilitado', variant: 'secondary' },
-]
+    { value: 'pendiente', label: 'Pendiente', variant: 'outline' },
+    { value: 'calificado', label: 'Calificado', variant: 'default' },
+    { value: 'rechazado', label: 'Rechazado', variant: 'destructive' },
+    { value: 'inhabilitado', label: 'Inhabilitado', variant: 'secondary' },
+  ]
 
 function estadoVariant(estado: JugadorEstadoCalificacion) {
   return ESTADOS.find((e) => e.value === estado)?.variant ?? 'outline'
@@ -125,6 +128,7 @@ export default function JugadoresPage() {
   const [editing, setEditing] = useState<Jugador | null>(null)
   const [deleting, setDeleting] = useState<Jugador | null>(null)
   const [calificando, setCalificando] = useState<Jugador | null>(null)
+  const [importDialogOpen, setImportDialogOpen] = useState(false)
 
   const form = useForm<JugadorForm>({
     resolver: zodResolver(jugadorSchema),
@@ -372,10 +376,21 @@ export default function JugadoresPage() {
             Registro de jugadores de la liga y su estado de calificación.
           </p>
         </div>
-        <Button onClick={openCreate} disabled={!canWrite} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nuevo jugador
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setImportDialogOpen(true)}
+            disabled={!canWrite}
+            className="gap-2"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            Importar Excel
+          </Button>
+          <Button onClick={openCreate} disabled={!canWrite} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nuevo jugador
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -640,6 +655,11 @@ export default function JugadoresPage() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ImportJugadoresDialog
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
 
       {/* Confirm eliminar */}
       <ConfirmDialog

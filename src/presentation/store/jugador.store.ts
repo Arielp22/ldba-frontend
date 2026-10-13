@@ -18,6 +18,9 @@ interface JugadorState {
   isLoading: boolean
   isSaving: boolean
   error: string | null
+  isImporting: boolean
+  importErrors: { fila: number; error: string }[] | null
+  importResult: { creados: number } | null
 }
 
 interface JugadorActions {
@@ -31,6 +34,8 @@ interface JugadorActions {
   remove(id: number): Promise<void>
   calificar(id: number, dto: CalificarJugadorDto): Promise<void>
   clearError(): void
+  importarExcel(file: File): Promise<void>
+  clearImportState(): void
 }
 
 export const useJugadorStore = create<JugadorState & JugadorActions>(
@@ -44,6 +49,9 @@ export const useJugadorStore = create<JugadorState & JugadorActions>(
     filterActivo: undefined,
     isLoading: false,
     isSaving: false,
+    isImporting: false,
+    importErrors: null,
+    importResult: null,
     error: null,
 
     async load() {
@@ -149,6 +157,63 @@ export const useJugadorStore = create<JugadorState & JugadorActions>(
         })
         throw err
       }
+    },
+
+        async importarExcel(file) {
+      set({
+        isImporting: true,
+        error: null,
+        importErrors: null,
+        importResult: null,
+      })
+      try {
+        const result = await jugadorUseCase.importarExcel(file)
+        set({
+          isImporting: false,
+          importResult: { creados: result.creados },
+        })
+        await get().load()
+      } catch (err: unknown) {
+        const e = err as {
+          detail?: string
+          message?: string
+          fieldErrors?: Record<string, string[]>
+        }
+
+        // Detectar errores por fila
+        const rawErrores = e.fieldErrors?.errores as unknown
+        if (Array.isArray(rawErrores)) {
+          const parsed = rawErrores.map((item) => {
+            if (typeof item === 'string') {
+              try {
+                return JSON.parse(item)
+              } catch {
+                return { fila: 0, error: item }
+              }
+            }
+            return item as { fila: number; error: string }
+          })
+          set({
+            isImporting: false,
+            importErrors: parsed,
+          })
+          throw err
+        }
+
+        // Error genérico
+        const message =
+          e.detail ??
+          e.message ??
+          (e.fieldErrors?.archivo?.[0] as string | undefined) ??
+          'Error al importar el Excel'
+
+        set({ isImporting: false, error: message })
+        throw err
+      }
+    },
+
+    clearImportState() {
+      set({ importErrors: null, importResult: null, error: null })
     },
 
     clearError() {
